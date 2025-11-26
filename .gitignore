@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.env
+
+# Node.js
+node_modules/
+build/
+.DS_Store
+
+# Database
+*.sqlite3
+*.db
+
+# Engine Binaries (Don't commit the exe!)
+backend/engine/*.exe
+backend/engine/stockfish
