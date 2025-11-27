@@ -1,0 +1,101 @@
+.App {
+  text-align: center;
+  background-color: #FFF8E1; /* Vanilla Cream */
+  min-height: 100vh;
+  color: #3E2723; /* Dark Chocolate */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+h1 {
+  color: #D81B60; /* Berry Glaze */
+  margin-bottom: 20px;
+}
+
+button {
+  background-color: #D81B60; /* Berry Glaze */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #ad1457;
+}
+
+button.secondary {
+  background-color: #4DB6AC; /* Fresh Mint */
+}
+
+button.secondary:hover {
+  background-color: #00897b;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(62, 39, 35, 0.7); /* Dark Chocolate with opacity */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #FFF8E1; /* Vanilla Cream */
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  text-align: center;
+  border: 2px solid #8D6E63; /* Milk Chocolate */
+  max-width: 400px;
+  width: 90%;
+}
+
+.modal-header {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #D81B60;
+}
+
+.modal-subtext {
+  font-size: 16px;
+  margin-bottom: 20px;
+  color: #5D4037;
+}
+
+.player-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: white;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #D7CCC8;
+}
+
+.player-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  background-color: #ccc;
+  border-radius: 5px;
+}
+
+.winner-icon {
+  color: #4CAF50;
+  font-weight: bold;
+}
