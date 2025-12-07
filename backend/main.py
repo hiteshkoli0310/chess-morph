@@ -80,7 +80,7 @@ def get_move(req: MoveRequest):
     if board.is_game_over():
         return {"bot_move": None, "fen": new_fen, "game_over": True}
 
-    bot_move_uci = engine.get_move(new_fen, req.time_taken)
+    bot_move_uci, stats = engine.get_move(new_fen, req.time_taken)
     
     if bot_move_uci:
         board.push(chess.Move.from_uci(bot_move_uci))
@@ -89,7 +89,8 @@ def get_move(req: MoveRequest):
         return {
             "bot_move": bot_move_uci,
             "fen": final_fen,
-            "game_over": board.is_game_over()
+            "game_over": board.is_game_over(),
+            "stats": stats
         }
     else:
         return {"bot_move": None, "fen": new_fen, "game_over": True}

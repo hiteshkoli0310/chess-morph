@@ -2,7 +2,7 @@ import os
 from pymongo import MongoClient
 from datetime import datetime
 
-MONGO_URL = os.getenv("MONGO_URL", "mongodb://mongo:27017")
+MONGO_URL = os.getenv("MONGO_URL", "mongodb://localhost:27017")
 client = MongoClient(MONGO_URL)
 db = client.chessmorph
 

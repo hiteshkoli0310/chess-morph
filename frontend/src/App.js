@@ -4,7 +4,17 @@ import { Chessboard } from "react-chessboard";
 import Cookies from "js-cookie";
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
-import "./App.css";
+import {
+  Play,
+  RotateCcw,
+  Settings,
+  AlertTriangle,
+  Trophy,
+  Flag,
+  Crown,
+  X,
+} from "lucide-react";
+import MoveHistory from "./components/MoveHistory";
 
 const API_URL = "http://localhost:8000";
 
@@ -15,7 +25,9 @@ function App() {
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [modalOpen, setModalOpen] = useState(true);
   const [gameId, setGameId] = useState(null);
-  const [gameOverData, setGameOverData] = useState(null); // { winner: 'white'|'black'|'draw', reason: 'checkmate'|... }
+  const [gameOverData, setGameOverData] = useState(null);
+  const [engineStats, setEngineStats] = useState(null);
+  const [showStats, setShowStats] = useState(false);
   const [moveSquares, setMoveSquares] = useState({});
   const [optionSquares, setOptionSquares] = useState({});
   const lastMoveTime = useRef(Date.now());
@@ -28,7 +40,6 @@ function App() {
     }
   }, []);
 
-  // Check for game over conditions
   useEffect(() => {
     if (game.isGameOver()) {
       let winner = "draw";
@@ -70,15 +81,20 @@ function App() {
       lastMoveTime.current = Date.now();
 
       if (res.data.orientation === "black") {
-        // Trigger bot move for white
-        makeBotMove(res.data.game_id, null, res.data.fen, 0);
+        makeBotMove(res.data.game_id, null, res.data.fen, 0, newGame.pgn());
       }
     } catch (err) {
       console.error("Error starting game", err);
     }
   };
 
-  const makeBotMove = async (gId, userMove, currentFen, timeTaken) => {
+  const makeBotMove = async (
+    gId,
+    userMove,
+    currentFen,
+    timeTaken,
+    currentPgn
+  ) => {
     try {
       const res = await axios.post(`${API_URL}/get-move`, {
         game_id: gId,
@@ -88,10 +104,24 @@ function App() {
       });
 
       if (res.data.bot_move) {
-        const newGame = new Chess(res.data.fen);
+        const newGame = new Chess();
+        newGame.loadPgn(currentPgn || "");
+
+        const moveStr = res.data.bot_move;
+        const from = moveStr.substring(0, 2);
+        const to = moveStr.substring(2, 4);
+        const promotion =
+          moveStr.length > 4 ? moveStr.substring(4, 5) : undefined;
+
+        newGame.move({ from, to, promotion });
+
         setGame(newGame);
-        setFen(res.data.fen);
+        setFen(newGame.fen());
         lastMoveTime.current = Date.now();
+
+        if (res.data.stats) {
+          setEngineStats(res.data.stats);
+        }
       }
     } catch (err) {
       console.error("Error getting bot move", err);
@@ -132,7 +162,8 @@ function App() {
     };
 
     try {
-      const tempGame = new Chess(game.fen());
+      const tempGame = new Chess();
+      tempGame.loadPgn(game.pgn());
       const result = tempGame.move(move);
 
       if (!result) return false;
@@ -143,9 +174,15 @@ function App() {
 
       setGame(tempGame);
       setFen(tempGame.fen());
-      setOptionSquares({}); // Clear hints
+      setOptionSquares({});
 
-      makeBotMove(gameId, userMoveUci, fenBeforeMove, timeTaken);
+      makeBotMove(
+        gameId,
+        userMoveUci,
+        fenBeforeMove,
+        timeTaken,
+        tempGame.pgn()
+      );
 
       return true;
     } catch (e) {
@@ -153,12 +190,10 @@ function App() {
     }
   }
 
-  // Calculate custom square styles (Check highlight + Move hints)
   const customSquareStyles = {
     ...optionSquares,
   };
 
-  // Add King Check Highlight
   if (game.inCheck()) {
     const kingSquare = game.board().reduce((acc, row, rowIndex) => {
       const colIndex = row.findIndex(
@@ -175,49 +210,190 @@ function App() {
     if (kingSquare) {
       customSquareStyles[kingSquare] = {
         backgroundColor:
-          "radial-gradient(circle, rgba(255,0,0,.8), transparent 80%)",
+          "radial-gradient(circle, rgba(216, 27, 96, 0.8), transparent 80%)", // Strawberry
         borderRadius: "50%",
       };
     }
   }
 
+  const handleResign = () => {
+    if (!isGameStarted || gameOverData) return;
+
+    const winner = orientation === "white" ? "black" : "white";
+    setGameOverData({ winner, reason: "Resignation" });
+  };
+
+  const handleReset = () => {
+    setModalOpen(true);
+  };
+
   return (
-    <div
-      className="App"
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        height: "100vh",
-        flexDirection: "column",
-      }}
-    >
-      <h1>ChessMorph</h1>
-      <div style={{ width: "400px", height: "400px" }}>
-        <Chessboard
-          position={fen}
-          onPieceDrop={onDrop}
-          onPieceDragBegin={onPieceDragBegin}
-          onPieceDragEnd={onPieceDragEnd}
-          boardOrientation={orientation}
-          customDarkSquareStyle={{ backgroundColor: "#8D6E63" }} // Milk Chocolate
-          customLightSquareStyle={{ backgroundColor: "#F0E68C" }} // White Chocolate
-          customSquareStyles={customSquareStyles}
-        />
-      </div>
+    <div className="min-h-screen flex flex-col font-sans text-dessert-text bg-dessert-vanilla relative">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-orange-100 shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-tr from-dessert-milkChoc to-dessert-chocolate rounded-lg flex items-center justify-center text-white shadow-md transform hover:rotate-12 transition-transform duration-300">
+              <Crown className="w-5 h-5 fill-current" />
+            </div>
+            <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-dessert-chocolate">
+              ChessMorph
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-2 md:gap-4">
+            {isGameStarted && !gameOverData && (
+              <button
+                onClick={handleResign}
+                className="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 text-sm font-semibold text-dessert-strawberry bg-red-50 hover:bg-red-100 rounded-full transition-colors"
+                title="Resign Game"
+              >
+                <Flag className="w-4 h-4 fill-current" />
+                <span className="hidden sm:inline">Resign</span>
+              </button>
+            )}
+            <button
+              onClick={handleReset}
+              className="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 text-sm font-semibold text-dessert-chocolate bg-orange-50 hover:bg-orange-100 rounded-full transition-colors"
+            >
+              <Play className="w-4 h-4 fill-current" />
+              <span className="hidden sm:inline">New Game</span>
+            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowStats(!showStats)}
+                className={`p-2 rounded-full transition-colors ${
+                  showStats
+                    ? "bg-orange-100 text-dessert-chocolate"
+                    : "text-dessert-chocolate hover:bg-orange-50"
+                }`}
+              >
+                <Settings className="w-5 h-5" />
+              </button>
+
+              {showStats && (
+                <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-orange-100 p-4 z-50 animate-in fade-in zoom-in-95 duration-200">
+                  <h3 className="font-bold text-dessert-chocolate mb-3 border-b border-orange-50 pb-2">
+                    Engine Stats
+                  </h3>
+                  {engineStats ? (
+                    <div className="space-y-3 text-sm">
+                      <div className="flex justify-between items-center">
+                        <span className="text-stone-500">Difficulty</span>
+                        <span className="font-bold text-dessert-strawberry">
+                          {engineStats.difficulty}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-stone-500">Search Depth</span>
+                        <span className="font-mono bg-orange-50 px-2 py-0.5 rounded text-dessert-chocolate">
+                          {engineStats.depth}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-stone-500">Blunder Prob</span>
+                        <span className="font-bold text-dessert-mint">
+                          {engineStats.blunder_prob}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center text-stone-400 py-4 italic">
+                      Make a move to see stats...
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 max-w-6xl w-full mx-auto p-4 md:p-6 lg:p-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 items-start">
+          {/* Left Column: Status & Board */}
+          <div className="flex flex-col gap-6 w-full max-w-[600px] mx-auto lg:max-w-none">
+            {/* Status Bar */}
+            <div className="flex items-center justify-between bg-white px-5 py-3 rounded-xl shadow-sm border border-orange-50">
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-3 h-3 rounded-full ${
+                    game.turn() === "w"
+                      ? "bg-amber-100 border-2 border-amber-900"
+                      : "bg-amber-900"
+                  }`}
+                />
+                <span className="font-bold text-lg text-dessert-chocolate">
+                  {game.turn() === "w" ? "White's Turn" : "Black's Turn"}
+                </span>
+              </div>
+
+              <div className="flex gap-2">
+                {game.inCheck() && !game.isCheckmate() && (
+                  <span className="px-3 py-1 bg-dessert-strawberry text-white text-xs font-bold uppercase tracking-wider rounded-full shadow-sm flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3" /> Check
+                  </span>
+                )}
+                {game.isCheckmate() && (
+                  <span className="px-3 py-1 bg-dessert-chocolate text-white text-xs font-bold uppercase tracking-wider rounded-full shadow-sm flex items-center gap-1">
+                    <Trophy className="w-3 h-3" /> Checkmate
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Chessboard Area */}
+            <div className="relative w-full max-w-[70vh] mx-auto aspect-square shadow-2xl rounded-lg overflow-hidden border-[12px] border-white bg-white">
+              <Chessboard
+                position={fen}
+                onPieceDrop={onDrop}
+                onPieceDragBegin={onPieceDragBegin}
+                onPieceDragEnd={onPieceDragEnd}
+                boardOrientation={orientation}
+                customDarkSquareStyle={{ backgroundColor: "#8D6E63" }} // Milk Chocolate
+                customLightSquareStyle={{ backgroundColor: "#FFF8E1" }} // Vanilla
+                customSquareStyles={customSquareStyles}
+              />
+            </div>
+
+            <div className="lg:hidden text-center text-sm text-stone-500 mt-2">
+              Scroll down for move history
+            </div>
+          </div>
+
+          {/* Right Column: Move History */}
+          <div className="w-full lg:h-[600px] lg:sticky lg:top-24">
+            <MoveHistory history={game.history({ verbose: true })} />
+          </div>
+        </div>
+      </main>
 
       {/* Start Game Modal */}
       {modalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">Select Side</div>
-            <div className="modal-subtext">Choose your flavor</div>
-            <div
-              style={{ display: "flex", justifyContent: "center", gap: "10px" }}
-            >
-              <button onClick={() => startGame("white")}>White</button>
-              <button onClick={() => startGame("black")}>Black</button>
-              <button className="secondary" onClick={() => startGame("random")}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-dessert-chocolate/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-dessert-vanilla rounded-2xl shadow-2xl p-8 w-full max-w-sm border-4 border-dessert-milkChoc text-center">
+            <h2 className="text-2xl font-bold text-dessert-strawberry mb-2">
+              Select Side
+            </h2>
+            <p className="text-dessert-chocolate mb-6">Choose your flavor</p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={() => startGame("white")}
+                className="px-6 py-3 bg-white border-2 border-dessert-milkChoc rounded-xl hover:bg-orange-50 font-bold text-dessert-chocolate transition-all"
+              >
+                White
+              </button>
+              <button
+                onClick={() => startGame("black")}
+                className="px-6 py-3 bg-dessert-chocolate border-2 border-dessert-chocolate rounded-xl hover:bg-dessert-dark text-white font-bold transition-all"
+              >
+                Black
+              </button>
+              <button
+                onClick={() => startGame("random")}
+                className="px-6 py-3 bg-dessert-mint text-white rounded-xl hover:bg-teal-600 font-bold transition-all"
+              >
                 Random
               </button>
             </div>
@@ -227,66 +403,67 @@ function App() {
 
       {/* Game Over Modal */}
       {gameOverData && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-dessert-chocolate/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-dessert-vanilla rounded-2xl shadow-2xl p-8 w-full max-w-sm border-4 border-dessert-milkChoc text-center transform scale-100 animate-in zoom-in-95 duration-200 relative">
+            <button
+              onClick={() => setGameOverData(null)}
+              className="absolute top-4 right-4 p-1 text-dessert-chocolate/50 hover:text-dessert-chocolate hover:bg-orange-100 rounded-full transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <h2 className="text-3xl font-extrabold text-dessert-strawberry mb-2">
               {gameOverData.winner === "white"
                 ? "White Won!"
                 : gameOverData.winner === "black"
                 ? "Black Won!"
                 : "Draw!"}
-            </div>
-            <div className="modal-subtext">by {gameOverData.reason}</div>
+            </h2>
+            <p className="text-dessert-chocolate mb-8 font-medium">
+              by {gameOverData.reason}
+            </p>
 
-            <div className="player-card">
-              <div className="player-info">
-                <div
-                  className="avatar"
-                  style={{ backgroundColor: "white", border: "1px solid #ccc" }}
-                ></div>
-                <div>
-                  <div style={{ fontWeight: "bold" }}>White</div>
-                  <div style={{ fontSize: "12px", color: "#666" }}>1200</div>
+            <div className="space-y-3 mb-8">
+              <div className="flex items-center justify-between bg-white p-3 rounded-xl border border-dessert-milkChoc/30">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gray-100 rounded-lg border border-gray-200"></div>
+                  <div className="text-left">
+                    <div className="font-bold text-dessert-chocolate">
+                      White
+                    </div>
+                    <div className="text-xs text-stone-500">1200</div>
+                  </div>
                 </div>
+                {gameOverData.winner === "white" && (
+                  <Trophy className="w-5 h-5 text-dessert-caramel" />
+                )}
               </div>
-              {gameOverData.winner === "white" && (
-                <div className="winner-icon">👑</div>
-              )}
-            </div>
 
-            <div className="player-card">
-              <div className="player-info">
-                <div
-                  className="avatar"
-                  style={{ backgroundColor: "black", border: "1px solid #ccc" }}
-                ></div>
-                <div>
-                  <div style={{ fontWeight: "bold" }}>Black</div>
-                  <div style={{ fontSize: "12px", color: "#666" }}>1200</div>
+              <div className="flex items-center justify-between bg-white p-3 rounded-xl border border-dessert-milkChoc/30">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-dessert-chocolate rounded-lg border border-gray-800"></div>
+                  <div className="text-left">
+                    <div className="font-bold text-dessert-chocolate">
+                      Black
+                    </div>
+                    <div className="text-xs text-stone-500">1200</div>
+                  </div>
                 </div>
+                {gameOverData.winner === "black" && (
+                  <Trophy className="w-5 h-5 text-dessert-caramel" />
+                )}
               </div>
-              {gameOverData.winner === "black" && (
-                <div className="winner-icon">👑</div>
-              )}
             </div>
 
-            <div
-              style={{
-                marginTop: "20px",
-                display: "flex",
-                justifyContent: "center",
-                gap: "10px",
+            <button
+              onClick={() => {
+                setGameOverData(null);
+                setModalOpen(true);
               }}
+              className="w-full py-3 bg-dessert-strawberry text-white font-bold rounded-xl hover:bg-pink-700 transition-colors shadow-lg shadow-pink-200"
             >
-              <button
-                onClick={() => {
-                  setGameOverData(null);
-                  setModalOpen(true);
-                }}
-              >
-                New Game
-              </button>
-            </div>
+              New Game
+            </button>
           </div>
         </div>
       )}
