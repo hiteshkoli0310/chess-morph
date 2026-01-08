@@ -5,7 +5,7 @@
 </div>
 <br>
 <p align="center">
-  <a href="https://chessmorph.vercel.app">
+  <a href="https://chess-morph.vercel.app/">
     <img src="https://img.shields.io/badge/Live-Demo-success?style=for-the-badge&logo=vercel" alt="Live Demo">
   </a>
   <a href="https://github.com/hiteshkoli0310/chess-morph/blob/main/LICENSE">
@@ -32,7 +32,7 @@ Whether you're a grandmaster or a beginner, our sleek, dessert-themed interface 
 
 ## Features
 
- **Adaptive Engine**: Built on top of Stockfish to provide challenging yet human-like gameplay.  
+**Adaptive Engine**: Built on top of Stockfish to provide challenging yet human-like gameplay.  
  **Real-time Analytics**: View Centipawn (CP) loss, blunder probability, and search depth after every move.  
  **Dessert UI Theme**: A unique, relaxing visual style featuring "Dessert Chocolate", "Strawberry", and "Vanilla" palettes.  
  **Instant Feedback**: Fast move validation and execution using a highly optimized Python backend.  
@@ -72,34 +72,36 @@ Follow these steps to set up ChessMorph locally on your machine.
 
    ```bash
    cd backend
-   
+
    # Create virtual environment (optional but recommended)
    python -m venv venv
    # Windows: venv\Scripts\activate
    # Linux/Mac: source venv/bin/activate
-   
+
    # Install dependencies
    pip install -r requirements.txt
-   
+
    # Run the server
    uvicorn main:app --reload
    ```
-   *The backend will start at `http://localhost:8000`*
+
+   _The backend will start at `http://localhost:8000`_
 
 3. **Frontend Setup**
 
    Open a new terminal window:
-   
+
    ```bash
    cd frontend
-   
+
    # Install dependencies
    npm install
-   
+
    # Run the client
    npm start
    ```
-   *The frontend will start at `http://localhost:3000`*
+
+   _The frontend will start at `http://localhost:3000`_
 
 ## Live Demo
 
