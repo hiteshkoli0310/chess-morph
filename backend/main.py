@@ -59,15 +59,15 @@ def start_game(req: StartGameRequest):
         
         board = chess.Board()
         
-        # HANDICAP: Remove Bot's Queen to give user a strong start
-        if side == "white": # User is White, Bot is Black
-            board.remove_piece_at(chess.D8)
-        else: # User is Black, Bot is White
-            board.remove_piece_at(chess.D1)
+        # HANDICAP REMOVED
 
         fen = board.fen()
         
         game_id = create_game(req.guest_id, side, fen, side)
+        
+        # If user is black, bot needs to make first move? 
+        # For MVP simplicity, let's assume user triggers bot move if they are black via frontend logic 
+        # or we handle it here. Let's stick to standard flow: return game setup.
         
         return {
             "game_id": game_id,
@@ -76,9 +76,8 @@ def start_game(req: StartGameRequest):
         }
     except Exception as e:
         import traceback
-        error_msg = f"Error in start_game: {str(e)}\n{traceback.format_exc()}"
-        print(error_msg)
-        raise HTTPException(status_code=500, detail=error_msg)
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Start Game Error: {str(e)}")
 
 @app.post("/get-move")
 def get_move(req: MoveRequest):
