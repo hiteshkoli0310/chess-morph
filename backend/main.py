@@ -59,12 +59,8 @@ def start_game(req: StartGameRequest):
         
         board = chess.Board()
         
-        # HANDICAP: Remove Bot's Queen to give user a strong start
-        if side == "white": # User is White, Bot is Black
-            board.remove_piece_at(chess.D8)
-        else: # User is Black, Bot is White
-            board.remove_piece_at(chess.D1)
-
+        # Handicap removed - Fair game
+        
         fen = board.fen()
         
         game_id = create_game(req.guest_id, side, fen, side)
