@@ -10,6 +10,12 @@ from morph_engine import MorphEngine
 
 app = FastAPI()
 
+API_VERSION = "1.0.1 (Debug Fix)"
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "version": API_VERSION}
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
