@@ -8,8 +8,8 @@
   <a href="https://chess-morph.vercel.app/">
     <img src="https://img.shields.io/badge/Live-Demo-success?style=for-the-badge&logo=vercel" alt="Live Demo">
   </a>
-  <a href="https://github.com/hiteshkoli0310/chess-morph/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/hiteshkoli0310/chess-morph?style=for-the-badge" alt="License">
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-orange?style=for-the-badge" alt="License">
   </a>
   <img src="https://img.shields.io/github/stars/hiteshkoli0310/chess-morph?style=for-the-badge" alt="Stars">
   <img src="https://img.shields.io/github/issues/hiteshkoli0310/chess-morph?style=for-the-badge" alt="Issues">
