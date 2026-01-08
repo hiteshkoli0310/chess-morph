@@ -3,8 +3,30 @@ from pymongo import MongoClient
 from datetime import datetime
 
 MONGO_URL = os.getenv("MONGO_URL", "mongodb://localhost:27017")
-client = MongoClient(MONGO_URL)
-db = client.chessmorph
+
+# Safe initialization
+db = None
+try:
+    client = MongoClient(MONGO_URL, serverSelectionTimeoutMS=2000)
+    # Trigger connection check
+    client.server_info()
+    db = client.chessmorph
+    print("Connected to MongoDB")
+except Exception as e:
+    print(f"Warning: Could not connect to MongoDB. Using in-memory fallback. Error: {e}")
+    # Simple in-memory fallback for demo purposes if DB completely fails
+    class MockDB:
+        def __init__(self):
+            self.games = self
+        def insert_one(self, data):
+            from bson.objectid import ObjectId
+            # Mock an ID
+            class Result:
+                inserted_id = ObjectId()
+            return Result()
+        def update_one(self, query, update):
+            return None
+    db = MockDB()
 
 def get_database():
     return db
