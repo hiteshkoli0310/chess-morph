@@ -7,7 +7,7 @@
 </div>
 <br>
 <p align="center">
-  <a href="https://chessmorph.vercel.app">
+  <a href="https://chess-morph.vercel.app/">
     <img src="https://img.shields.io/badge/Live-Demo-dessert?style=for-the-badge&logo=vercel&color=D81B60" alt="Live Demo">
   </a>
   <a href="LICENSE">
