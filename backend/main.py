@@ -46,31 +46,33 @@ def update_config(req: ConfigRequest):
 
 @app.post("/start-game")
 def start_game(req: StartGameRequest):
-    side = req.side
-    if side == "random":
-        side = random.choice(["white", "black"])
-    
-    board = chess.Board()
-    
-    # HANDICAP: Remove Bot's Queen to give user a strong start
-    if side == "white": # User is White, Bot is Black
-        board.remove_piece_at(chess.D8)
-    else: # User is Black, Bot is White
-        board.remove_piece_at(chess.D1)
+    try:
+        side = req.side
+        if side == "random":
+            side = random.choice(["white", "black"])
+        
+        board = chess.Board()
+        
+        # HANDICAP: Remove Bot's Queen to give user a strong start
+        if side == "white": # User is White, Bot is Black
+            board.remove_piece_at(chess.D8)
+        else: # User is Black, Bot is White
+            board.remove_piece_at(chess.D1)
 
-    fen = board.fen()
-    
-    game_id = create_game(req.guest_id, side, fen, side)
-    
-    # If user is black, bot needs to make first move? 
-    # For MVP simplicity, let's assume user triggers bot move if they are black via frontend logic 
-    # or we handle it here. Let's stick to standard flow: return game setup.
-    
-    return {
-        "game_id": game_id,
-        "fen": fen,
-        "orientation": side
-    }
+        fen = board.fen()
+        
+        game_id = create_game(req.guest_id, side, fen, side)
+        
+        return {
+            "game_id": game_id,
+            "fen": fen,
+            "orientation": side
+        }
+    except Exception as e:
+        import traceback
+        error_msg = f"Error in start_game: {str(e)}\n{traceback.format_exc()}"
+        print(error_msg)
+        raise HTTPException(status_code=500, detail=error_msg)
 
 @app.post("/get-move")
 def get_move(req: MoveRequest):
