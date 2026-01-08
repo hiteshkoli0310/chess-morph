@@ -10,12 +10,15 @@ db = None
 if USE_MONGO:
     try:
         from pymongo import MongoClient
-        client = MongoClient(MONGO_URL)
+        client = MongoClient(MONGO_URL, serverSelectionTimeoutMS=2000) # 2 sec timeout
+        # Force connection check
+        client.admin.command('ping')
         db = client.chessmorph
         print(f"Connected to MongoDB: {MONGO_URL}")
     except Exception as e:
         print(f"Failed to connect to Mongo, falling back to memory: {e}")
         USE_MONGO = False
+        db = None
 
 # In-Memory Fallback Storage
 games_memory = {}
