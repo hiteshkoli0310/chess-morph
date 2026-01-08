@@ -15,11 +15,8 @@ import {
 } from "lucide-react";
 import MoveHistory from "./components/MoveHistory";
 
-// In development (npm start), use localhost. 
-// In production (npm run build), require REACT_APP_API_URL or it will fail noticeably rather than silently trying localhost.
-const API_URL = process.env.NODE_ENV === 'production' 
-  ? (process.env.REACT_APP_API_URL || "https://chessmorph-backend.onrender.com")
-  : "http://localhost:8000";
+const API_URL =
+  process.env.REACT_APP_API_URL || "https://chessmorph-backend.onrender.com";
 
 function App() {
   const [game, setGame] = useState(new Chess());
