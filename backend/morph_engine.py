@@ -9,9 +9,11 @@ from datetime import datetime
 
 class MorphEngine:
     def __init__(self):
+        # Define base_dir globally for the class scope
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+
         # Path to stockfish executable
         if os.name == 'nt': # Windows
-            base_dir = os.path.dirname(os.path.abspath(__file__))
             self.engine_path = os.path.normpath(os.path.join(base_dir, "..", "stockfish", "stockfish-windows-x86-64-avx2.exe"))
         else: # Linux (Docker/Cloud)
             # We will install stockfish via apt-get in the Dockerfile
