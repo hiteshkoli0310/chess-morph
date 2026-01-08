@@ -11,7 +11,7 @@
     <img src="https://img.shields.io/badge/Live-Demo-dessert?style=for-the-badge&logo=vercel&color=D81B60" alt="Live Demo">
   </a>
   <a href="LICENSE">
-    <img src="https://img.shields.io/github/license/hiteshkoli0310/chess-morph?style=for-the-badge&color=orange" alt="License">
+    <img src="https://img.shields.io/badge/License-MIT-orange?style=for-the-badge" alt="License">
   </a>
   <img src="https://img.shields.io/github/stars/hiteshkoli0310/chess-morph?style=for-the-badge&color=yellow" alt="Stars">
   <img src="https://img.shields.io/github/issues/hiteshkoli0310/chess-morph?style=for-the-badge&color=red" alt="Issues">
