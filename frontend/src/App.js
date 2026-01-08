@@ -15,8 +15,9 @@ import {
 } from "lucide-react";
 import MoveHistory from "./components/MoveHistory";
 
-const API_URL =
-  process.env.REACT_APP_API_URL || "https://chessmorph-backend.onrender.com";
+const API_URL = (
+  process.env.REACT_APP_API_URL || "https://chessmorph-backend.onrender.com"
+).replace(/\/$/, "");
 
 function App() {
   const [game, setGame] = useState(new Chess());
