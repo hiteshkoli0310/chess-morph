@@ -15,7 +15,11 @@ import {
 } from "lucide-react";
 import MoveHistory from "./components/MoveHistory";
 
-const API_URL = "http://localhost:8000";
+// In development (npm start), use localhost. 
+// In production (npm run build), require REACT_APP_API_URL or it will fail noticeably rather than silently trying localhost.
+const API_URL = process.env.NODE_ENV === 'production' 
+  ? (process.env.REACT_APP_API_URL || "https://chessmorph-backend.onrender.com")
+  : "http://localhost:8000";
 
 function App() {
   const [game, setGame] = useState(new Chess());
@@ -120,7 +124,10 @@ function App() {
         lastMoveTime.current = Date.now();
 
         if (res.data.stats) {
-          console.log("Setting Engine Stats:", JSON.stringify(res.data.stats, null, 2)); // DEBUG LOG
+          console.log(
+            "Setting Engine Stats:",
+            JSON.stringify(res.data.stats, null, 2)
+          ); // DEBUG LOG
           setEngineStats(res.data.stats);
         } else {
           console.warn("No stats received from backend"); // DEBUG LOG
@@ -157,16 +164,21 @@ function App() {
   function onDrop(sourceSquare, targetSquare) {
     console.log("onDrop called:", sourceSquare, targetSquare); // DEBUG LOG
     if (!isGameStarted) {
-        console.log("onDrop ignored: Game not started");
-        return false;
+      console.log("onDrop ignored: Game not started");
+      return false;
     }
     if (gameOverData) {
-        console.log("onDrop ignored: Game over");
-        return false;
+      console.log("onDrop ignored: Game over");
+      return false;
     }
     if (game.turn() !== orientation.charAt(0)) {
-        console.log("onDrop ignored: Not user turn. Turn:", game.turn(), "Orientation:", orientation);
-        return false;
+      console.log(
+        "onDrop ignored: Not user turn. Turn:",
+        game.turn(),
+        "Orientation:",
+        orientation
+      );
+      return false;
     }
 
     const move = {
@@ -181,8 +193,8 @@ function App() {
       const result = tempGame.move(move);
 
       if (!result) {
-          console.log("onDrop ignored: Illegal move");
-          return false;
+        console.log("onDrop ignored: Illegal move");
+        return false;
       }
 
       console.log("Move valid. Sending to backend..."); // DEBUG LOG
@@ -322,15 +334,28 @@ function App() {
                       {engineStats.user_cp !== undefined && (
                         <div className="flex justify-between items-center border-t border-orange-50 pt-2 mt-2">
                           <span className="text-stone-500">Your Advantage</span>
-                          <span className={`font-mono font-bold ${engineStats.user_cp > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {engineStats.user_cp > 0 ? '+' : ''}{engineStats.user_cp} cp
+                          <span
+                            className={`font-mono font-bold ${
+                              engineStats.user_cp > 0
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            {engineStats.user_cp > 0 ? "+" : ""}
+                            {engineStats.user_cp} cp
                           </span>
                         </div>
                       )}
                       {engineStats.cp_loss !== undefined && (
                         <div className="flex justify-between items-center">
                           <span className="text-stone-500">CP Loss</span>
-                          <span className={`font-mono ${engineStats.cp_loss > 50 ? 'text-red-500 font-bold' : 'text-stone-600'}`}>
+                          <span
+                            className={`font-mono ${
+                              engineStats.cp_loss > 50
+                                ? "text-red-500 font-bold"
+                                : "text-stone-600"
+                            }`}
+                          >
                             {engineStats.cp_loss}
                           </span>
                         </div>
@@ -339,14 +364,17 @@ function App() {
                         <div className="flex justify-between items-center">
                           <span className="text-stone-500">Time Taken</span>
                           <span className="font-mono text-stone-600">
-                            {typeof engineStats.time_taken === 'number' ? engineStats.time_taken.toFixed(2) : engineStats.time_taken}s
+                            {typeof engineStats.time_taken === "number"
+                              ? engineStats.time_taken.toFixed(2)
+                              : engineStats.time_taken}
+                            s
                           </span>
                         </div>
                       )}
                       {engineStats.is_blunder && (
-                         <div className="mt-2 text-center bg-red-100 text-red-700 font-bold py-1 rounded animate-pulse text-xs uppercase tracking-wider">
-                           Blunder Detected!
-                         </div>
+                        <div className="mt-2 text-center bg-red-100 text-red-700 font-bold py-1 rounded animate-pulse text-xs uppercase tracking-wider">
+                          Blunder Detected!
+                        </div>
                       )}
                     </div>
                   ) : (

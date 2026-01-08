@@ -10,10 +10,16 @@ from datetime import datetime
 class MorphEngine:
     def __init__(self):
         # Path to stockfish executable
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        self.engine_path = os.path.normpath(os.path.join(base_dir, "..", "stockfish", "stockfish-windows-x86-64-avx2.exe"))
-        
-        if not os.path.exists(self.engine_path):
+        if os.name == 'nt': # Windows
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            self.engine_path = os.path.normpath(os.path.join(base_dir, "..", "stockfish", "stockfish-windows-x86-64-avx2.exe"))
+        else: # Linux (Docker/Cloud)
+            # We will install stockfish via apt-get in the Dockerfile
+            self.engine_path = "/usr/games/stockfish"
+            if not os.path.exists(self.engine_path):
+                 self.engine_path = "/usr/bin/stockfish" # Alternative path
+
+        if not os.path.exists(self.engine_path) and os.name == 'nt':
             print(f"WARNING: Stockfish engine not found at {self.engine_path}")
 
         # --- LOGGING SETUP ---
