@@ -30,6 +30,20 @@ class MoveRequest(BaseModel):
     fen: str # FEN before user move (or we can reconstruct, but passing current FEN is easier)
     time_taken: float
 
+class ConfigRequest(BaseModel):
+    USER_WINNING_MARGIN: int = None
+    USER_LOSING_MARGIN: int = None
+    FAST_PLAY_LIMIT: float = None
+    MISTAKE_SEVERE_MIN: int = None
+    MISTAKE_NATURAL_MIN: int = None
+    MISTAKE_NATURAL_MAX: int = None
+
+@app.post("/update-config")
+def update_config(req: ConfigRequest):
+    config = req.dict(exclude_none=True)
+    engine.update_config(config)
+    return {"status": "updated", "config": config}
+
 @app.post("/start-game")
 def start_game(req: StartGameRequest):
     side = req.side
@@ -37,6 +51,13 @@ def start_game(req: StartGameRequest):
         side = random.choice(["white", "black"])
     
     board = chess.Board()
+    
+    # HANDICAP: Remove Bot's Queen to give user a strong start
+    if side == "white": # User is White, Bot is Black
+        board.remove_piece_at(chess.D8)
+    else: # User is Black, Bot is White
+        board.remove_piece_at(chess.D1)
+
     fen = board.fen()
     
     game_id = create_game(req.guest_id, side, fen, side)
@@ -80,7 +101,10 @@ def get_move(req: MoveRequest):
     if board.is_game_over():
         return {"bot_move": None, "fen": new_fen, "game_over": True}
 
-    bot_move_uci, stats = engine.get_move(new_fen, req.time_taken)
+    prev_fen = req.fen if req.user_move != "0000" else None
+    user_move = req.user_move if req.user_move != "0000" else None
+
+    bot_move_uci, stats = engine.get_move(new_fen, req.time_taken, prev_fen=prev_fen, user_move_uci=user_move)
     
     if bot_move_uci:
         board.push(chess.Move.from_uci(bot_move_uci))
@@ -94,3 +118,7 @@ def get_move(req: MoveRequest):
         }
     else:
         return {"bot_move": None, "fen": new_fen, "game_over": True}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

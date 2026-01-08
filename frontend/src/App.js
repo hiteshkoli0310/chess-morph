@@ -6,7 +6,6 @@ import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 import {
   Play,
-  RotateCcw,
   Settings,
   AlertTriangle,
   Trophy,
@@ -28,7 +27,6 @@ function App() {
   const [gameOverData, setGameOverData] = useState(null);
   const [engineStats, setEngineStats] = useState(null);
   const [showStats, setShowStats] = useState(false);
-  const [moveSquares, setMoveSquares] = useState({});
   const [optionSquares, setOptionSquares] = useState({});
   const lastMoveTime = useRef(Date.now());
 
@@ -103,6 +101,8 @@ function App() {
         time_taken: timeTaken,
       });
 
+      console.log("Bot Move Response:", JSON.stringify(res.data, null, 2)); // DEBUG LOG
+
       if (res.data.bot_move) {
         const newGame = new Chess();
         newGame.loadPgn(currentPgn || "");
@@ -120,7 +120,10 @@ function App() {
         lastMoveTime.current = Date.now();
 
         if (res.data.stats) {
+          console.log("Setting Engine Stats:", JSON.stringify(res.data.stats, null, 2)); // DEBUG LOG
           setEngineStats(res.data.stats);
+        } else {
+          console.warn("No stats received from backend"); // DEBUG LOG
         }
       }
     } catch (err) {
@@ -152,8 +155,19 @@ function App() {
   }
 
   function onDrop(sourceSquare, targetSquare) {
-    if (!isGameStarted || gameOverData) return false;
-    if (game.turn() !== orientation.charAt(0)) return false;
+    console.log("onDrop called:", sourceSquare, targetSquare); // DEBUG LOG
+    if (!isGameStarted) {
+        console.log("onDrop ignored: Game not started");
+        return false;
+    }
+    if (gameOverData) {
+        console.log("onDrop ignored: Game over");
+        return false;
+    }
+    if (game.turn() !== orientation.charAt(0)) {
+        console.log("onDrop ignored: Not user turn. Turn:", game.turn(), "Orientation:", orientation);
+        return false;
+    }
 
     const move = {
       from: sourceSquare,
@@ -166,7 +180,12 @@ function App() {
       tempGame.loadPgn(game.pgn());
       const result = tempGame.move(move);
 
-      if (!result) return false;
+      if (!result) {
+          console.log("onDrop ignored: Illegal move");
+          return false;
+      }
+
+      console.log("Move valid. Sending to backend..."); // DEBUG LOG
 
       const timeTaken = (Date.now() - lastMoveTime.current) / 1000;
       const userMoveUci = result.from + result.to + (result.promotion || "");
@@ -186,6 +205,7 @@ function App() {
 
       return true;
     } catch (e) {
+      console.error("onDrop error:", e);
       return false;
     }
   }
@@ -262,13 +282,16 @@ function App() {
             <div className="relative">
               <button
                 onClick={() => setShowStats(!showStats)}
-                className={`p-2 rounded-full transition-colors ${
+                className={`p-2 rounded-full transition-colors relative ${
                   showStats
                     ? "bg-orange-100 text-dessert-chocolate"
                     : "text-dessert-chocolate hover:bg-orange-50"
                 }`}
               >
                 <Settings className="w-5 h-5" />
+                {engineStats && !showStats && (
+                  <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                )}
               </button>
 
               {showStats && (
@@ -279,23 +302,52 @@ function App() {
                   {engineStats ? (
                     <div className="space-y-3 text-sm">
                       <div className="flex justify-between items-center">
-                        <span className="text-stone-500">Difficulty</span>
-                        <span className="font-bold text-dessert-strawberry">
-                          {engineStats.difficulty}
+                        <span className="text-stone-500">Bot Persona</span>
+                        <span className="font-bold text-dessert-strawberry text-right">
+                          {engineStats.difficulty || "Unknown"}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-stone-500">Search Depth</span>
                         <span className="font-mono bg-orange-50 px-2 py-0.5 rounded text-dessert-chocolate">
-                          {engineStats.depth}
+                          {engineStats.depth || 0}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-stone-500">Blunder Prob</span>
                         <span className="font-bold text-dessert-mint">
-                          {engineStats.blunder_prob}
+                          {engineStats.blunder_prob || "N/A"}
                         </span>
                       </div>
+                      {engineStats.user_cp !== undefined && (
+                        <div className="flex justify-between items-center border-t border-orange-50 pt-2 mt-2">
+                          <span className="text-stone-500">Your Advantage</span>
+                          <span className={`font-mono font-bold ${engineStats.user_cp > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {engineStats.user_cp > 0 ? '+' : ''}{engineStats.user_cp} cp
+                          </span>
+                        </div>
+                      )}
+                      {engineStats.cp_loss !== undefined && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-stone-500">CP Loss</span>
+                          <span className={`font-mono ${engineStats.cp_loss > 50 ? 'text-red-500 font-bold' : 'text-stone-600'}`}>
+                            {engineStats.cp_loss}
+                          </span>
+                        </div>
+                      )}
+                      {engineStats.time_taken !== undefined && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-stone-500">Time Taken</span>
+                          <span className="font-mono text-stone-600">
+                            {typeof engineStats.time_taken === 'number' ? engineStats.time_taken.toFixed(2) : engineStats.time_taken}s
+                          </span>
+                        </div>
+                      )}
+                      {engineStats.is_blunder && (
+                         <div className="mt-2 text-center bg-red-100 text-red-700 font-bold py-1 rounded animate-pulse text-xs uppercase tracking-wider">
+                           Blunder Detected!
+                         </div>
+                      )}
                     </div>
                   ) : (
                     <div className="text-center text-stone-400 py-4 italic">
@@ -344,7 +396,7 @@ function App() {
             </div>
 
             {/* Chessboard Area */}
-            <div className="relative w-full max-w-[70vh] mx-auto aspect-square shadow-2xl rounded-lg overflow-hidden border-[12px] border-white bg-white">
+            <div className="relative w-full max-w-[70vh] mx-auto aspect-square shadow-2xl rounded-xl border-[12px] border-white bg-white z-0">
               <Chessboard
                 position={fen}
                 onPieceDrop={onDrop}
@@ -354,6 +406,7 @@ function App() {
                 customDarkSquareStyle={{ backgroundColor: "#8D6E63" }} // Milk Chocolate
                 customLightSquareStyle={{ backgroundColor: "#FFF8E1" }} // Vanilla
                 customSquareStyles={customSquareStyles}
+                animationDuration={200}
               />
             </div>
 

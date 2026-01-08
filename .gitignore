@@ -16,3 +16,4 @@ build/
 # Engine Binaries (Don't commit the exe!)
 backend/engine/*.exe
 backend/engine/stockfish
+*.csv
