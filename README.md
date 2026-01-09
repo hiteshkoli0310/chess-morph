@@ -99,7 +99,7 @@ The `MorphEngine` isn't just a wrapper; it implements a "Human-Like" engagement 
 
 ## Live Demo
 
-Play against the bot right now: **[ChessMorph Live](https://chessmorph.vercel.app)**
+Play against the bot right now: **[ChessMorph Live](https://chess-morph.vercel.app)**
 
 ## Contributing
 
