@@ -97,6 +97,24 @@ The `MorphEngine` isn't just a wrapper; it implements a "Human-Like" engagement 
     npm start
     ```
 
+## Keep-Warm Cron
+
+If your backend is hosted on a platform that sleeps after inactivity, use a scheduled HTTP ping to keep it warm.
+
+1.  Add a secret environment variable on the backend service named `CRON_TOKEN`.
+2.  Configure your scheduler to call `GET /warmup` every 5 minutes.
+3.  Send the token in the `X-Cron-Token` header.
+
+Example request:
+
+```bash
+curl -fsS \
+  -H "X-Cron-Token: your-secret-token" \
+  https://your-backend-domain.onrender.com/warmup
+```
+
+The existing `GET /health` route stays available for monitoring and uptime checks.
+
 ## Live Demo
 
 Play against the bot right now: **[ChessMorph Live](https://chess-morph.vercel.app)**

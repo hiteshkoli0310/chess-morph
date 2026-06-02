@@ -1,4 +1,6 @@
-from fastapi import FastAPI, HTTPException
+import os
+
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import chess
@@ -10,11 +12,23 @@ from morph_engine import MorphEngine
 
 app = FastAPI()
 
-API_VERSION = "1.0.1 (Debug Fix)"
+API_VERSION = "1.1.0 (Warmup Endpoint)"
+CRON_TOKEN = os.getenv("CRON_TOKEN")
+CRON_TOKEN_HEADER = "X-Cron-Token"
 
 @app.get("/health")
 def health_check():
     return {"status": "ok", "version": API_VERSION}
+
+
+@app.get("/warmup")
+def warmup(request: Request):
+    if CRON_TOKEN:
+        request_token = request.headers.get(CRON_TOKEN_HEADER)
+        if request_token != CRON_TOKEN:
+            raise HTTPException(status_code=401, detail="Invalid or missing cron token")
+
+    return {"status": "ok", "version": API_VERSION, "warmup": True}
 
 app.add_middleware(
     CORSMiddleware,
